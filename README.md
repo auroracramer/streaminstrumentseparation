@@ -10,8 +10,9 @@ Dependences
 * numpy
 * scipy
 * pyaudio
-* FASST 2.0
 * scikits.audiolab
 * librosa
 
 More usage documentation to come.
+
+Since the audio files are .wav files, and there are a lot of them, they are not currently in this repository.
