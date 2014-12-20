@@ -21,8 +21,10 @@ class WolaSTFT(object):
         self._overlap = overlap
         self._hopsize = window_size - overlap
         self._num_windows = (chunk_size-overlap)/self._hopsize
-        self._rfft_size = window_size/2 + 1 if window_size%2==0 \
-                          else (window_size+1)/2
+
+        #self._rfft_size = window_size/2 + 1 if window_size%2==0 \
+        #                  else (window_size+1)/2
+        self._fft_size = 2**(self._window_size-1).bit_length()
 
         # Use the sqrt-Hamming window for the analysis and synthesis windows
         self._window = np.sqrt(np.hamming(window_size+1))[:-1]
@@ -57,11 +59,18 @@ class WolaSTFT(object):
                 "Invalid chunk size!"
 
 
-        stft = np.zeros((self._rfft_size, self._num_windows), dtype='cfloat')
+        stft = np.zeros((self._fft_size, self._num_windows), dtype='cfloat')
+        padding = np.zeros(self._fft_size - self._window_size, dtype='cfloat')
+
+        Mo2 = (self._window_size - (self._window_size % 2))/2
         for i in xrange(self._num_windows):
             start = i*self._hopsize
             windowed = self._window * chunk[start:start+self._window_size]
-            stft[:,i] = np.fft.rfft(windowed)
+            #padded = np.concatenate((windowed[Mo2:], padding, windowed[:Mo2]))
+            padded = np.concatenate((windowed, padding))
+
+            #stft[:,i] = np.fft.fft(windowed)
+            stft[:,i] = np.fft.fft(padded)
 
             if i == self._num_windows - 1:
                 num_proc = start + self._window_size
@@ -83,18 +92,22 @@ class WolaSTFT(object):
         """
         Computes the inverse STFT, and performs WOLA to produce an output.
         """
-        assert stft.shape == (self._rfft_size, self._num_windows), \
+        assert stft.shape == (self._fft_size, self._num_windows), \
                 "Invalid STFT size for this filter bank."
 
+        No2 = self._fft_size/2
         self._output = np.zeros(self._chunk_size, dtype='float')
         i= np.zeros(self._chunk_size, dtype='float')
 
         for i in xrange(self._num_windows):
             start = i*self._hopsize
-            windowed = np.real(self._window * np.fft.irfft(stft[:,i]))
+            ifft = np.fft.ifft(stft[:,i])
+            #x = np.concatenate((ifft[self._fft_size - No2:], ifft[:No2]))
+            x = ifft[:self._window_size]
+            windowed = np.real(self._window * x)
             self._output[start:start+self._window_size] += windowed
 
-        self._output = self.correct_magnitude(self._output)
+        #self._output = self.correct_magnitude(self._output)
         assert self._output.size == self._chunk_size
 
         return self._output

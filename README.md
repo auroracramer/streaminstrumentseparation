@@ -1,10 +1,8 @@
-A Real-Time System for Instrument Recognition and Separation
+Source Separation of Instruments in Musical Audio Streams
 ============================================================
 Jason Cramer
 
-Abstact
--------
-We investigate and implement a system that performs instrument recognition on a real-time audio signal, separates it into an individual instrument channels, and processes the channels in some way. The motivation is to record an impromptu musical performance and get reasonable audio processing and mixing without much equipment.
+See included paper for more details.
 
 Dependences
 -----------
@@ -12,3 +10,8 @@ Dependences
 * numpy
 * scipy
 * pyaudio
+* FASST 2.0
+* scikits.audiolab
+* librosa
+
+More usage documentation to come.
